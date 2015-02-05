@@ -1,0 +1,56 @@
+@import X-Raym_Functions - console debug messages.eel
+
+debug = 1; // 0 => No console. 1 => Display console messages for debugging
+
+PLUGIN_TITLE="Counter";
+
+selectedTrack = GetSelectedTrack(0, 0);
+
+cursor_pos = GetCursorPosition();
+i = 0;
+iterate_media = 1;
+iterate_events = 1;
+
+loop(CountTrackMediaItems(selectedTrack), iterate_media ? (
+  item_id = GetTrackMediaItem(selectedTrack, i);
+  pos = GetMediaItemInfo_Value(item_id, "D_POSITION");
+  length = GetMediaItemInfo_Value(item_id, "D_LENGTH");
+  end_pos = pos + length;
+  
+  current_pos_ppq = MIDI_GetPPQPosFromProjTime(take, cursor_pos);
+printf("MediaItem %f %f %f\n", pos, end_pos, cursor_pos);
+  (abs(cursor_pos - pos) < 0.0001) ? printf("Before: MediaItem %d %d %d\n", pos, end_pos, cursor_pos);
+//  ((cursor_pos >= pos) && (cursor_pos <= end_pos)) ? (
+  (abs(cursor_pos - pos) < 0.0001) && (cursor_pos <= end_pos) ? (
+    // cursor is on item
+  	printf("%s %d %d %d", "Matched", pos, end_pos, cursor_pos);
+  	take = GetActiveTake(item_id);
+  	
+  	current_pos_ppq = MIDI_GetPPQPosFromProjTime(take, cursor_pos);
+  	
+  	evt_index = 0;
+  	loop(MIDI_CountEvts(take, NULL, NULL, num_sysex), iterate_events ?
+  		(
+  			printf("Event\n");
+  			MIDI_GetTextSysexEvt(take, evt_index, NULL, NULL, current_evt_pos_ppq, current_evt_type, current_ent_msg);
+  			(current_evt_type == -1) ? (
+  				printf("Sysex\n");
+  				// yes, this is a sysex message
+  				(current_pos_ppq == current_evt_pos_ppq) ? (
+  					printf("On current position\n");
+  					// yes, it is on current cursor position
+  					printf("%d\n", strlen(current_msg));
+  					sprintf(#expected_sysex, "%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c", 0x42, 0x30, 0x00, 0x01, 0x05, 0x41, 0x00, 0x00, 0x0D, 0x00, 0x28, 0x00, 0x00, 0x00, 0x00, 0x01);
+  					!strcmp(current_msg, #expected_sysex) ? printf("Message matched!");
+//  					(current_msg == $42300001054100000D00280000000001) ? printf("Bingo");
+  				);
+  			);
+  			evt_index += 1;
+  		)
+  	);
+  	iterate_media = 0;
+  );
+  i += 1;
+  
+  )
+);

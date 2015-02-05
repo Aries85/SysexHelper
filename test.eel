@@ -1,0 +1,55 @@
+// Convert selected looped items into independent items
+// EEL Script for Reaper
+// Author : X-Raym
+// Author URl : http://extremraym.com
+// Source : GitHub > X-Raym > EEL Scripts for Cockos REAPER
+// Source URl : https://github.com/X-Raym/REAPER-EEL-Scripts
+// Licence : GPL v3
+// Release Date : 28-01-2015
+
+// Version : 1.0
+// Version Date : 28-01-2015
+// Required : Reaper 4.76
+
+/* DEBUGGING ====> */
+@import X-Raym_Functions - console debug messages.eel
+
+debug = 1; // 0 => No console. 1 => Display console messages for debugging
+/* <=== DEBUGGING */
+
+function GetMediaItemOnPosition(track, position) local(i, retVal, mediaItem, mediaItemStartTime, mediaItemEndTime)
+(
+	i = 0;
+	retVal=NULL;
+	iterate = 1;
+	loop(CountTrackMediaItems(track), iterate ?
+			mediaItem = GetTrackMediaItem(track, i);
+			take = GetActiveTake(mediaItem);
+			mediaItemStartTime = GetMediaItemInfo_Value(mediaItem, "D_POSITION");
+			msg_s("MI start");
+			msg_d(mediaItemStartTime);
+			mediaItemEndTime = mediaItemStartTime + GetMediaItemInfo_Value(mediaItem, "D_LENGTH");
+			msg_s("MI end");
+			msg_f(mediaItemEndTime);
+			(position >= mediaItemStartTime) ? ShowMessageBox("1 AAAA", PLUGIN_TITLE, 0) : ShowMessageBox("1 BBBBB", PLUGIN_TITLE, 0);
+			(position <= mediaItemEndTime) ? ShowMessageBox("2 AAAA", PLUGIN_TITLE, 0) : ShowMessageBox("2 BBBBB", PLUGIN_TITLE, 0);
+			((position >= mediaItemStartTime) && (position <= mediaItemEndTime)) ? retVal=mediaItem; msg_s("matched"); iterate = 0;
+			i += 1;
+	);
+	retVal;
+);
+
+PLUGIN_TITLE="M50 Helper";
+
+numSelectedTracks = CountSelectedTracks(0);
+(numSelectedTracks == 1) ?
+	(
+		selectedTrack = GetSelectedTrack(0, 0);
+		cursorPosition = GetCursorPosition();
+		msg_s("Cursor position");
+		msg_f(cursorPosition);
+		mediaItem = GetMediaItemOnPosition(selectedTrack, cursorPosition);
+		(mediaItem == NULL) ? ShowMessageBox("AAAA", PLUGIN_TITLE, 0) : ShowMessageBox("BBBBB", PLUGIN_TITLE, 0);
+	) : ShowMessageBox("Multiple tracks are selected, aborting", PLUGIN_TITLE, 0);
+
+
