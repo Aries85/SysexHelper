@@ -1,6 +1,6 @@
-@import X-Raym_Functions - console debug messages.eel
 
-debug = 1; // 0 => No console. 1 => Display console messages for debugging
+sprintf(#sys_dr_on, "%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c", 0x42, 0x30, 0x00, 0x01, 0x05, 0x41, 0x00, 0x00, 0x0B, 0x00, 0x0A, 0x00, 0x00, 0x00, 0x00, 0x01);
+sprintf(#sys_dr_off, "%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c", 0x42, 0x30, 0x00, 0x01, 0x05, 0x41, 0x00, 0x00, 0x0B, 0x00, 0x0A, 0x00, 0x00, 0x00, 0x00, 0x00);
 
 PLUGIN_TITLE="Counter";
 
@@ -18,12 +18,10 @@ loop(CountTrackMediaItems(selectedTrack), iterate_media ? (
   end_pos = pos + length;
   
   current_pos_ppq = MIDI_GetPPQPosFromProjTime(take, cursor_pos);
-printf("MediaItem %f %f %f\n", pos, end_pos, cursor_pos);
-  (abs(cursor_pos - pos) < 0.0001) ? printf("Before: MediaItem %d %d %d\n", pos, end_pos, cursor_pos);
-//  ((cursor_pos >= pos) && (cursor_pos <= end_pos)) ? (
-  (abs(cursor_pos - pos) < 0.0001) && (cursor_pos <= end_pos) ? (
+	printf("MediaItem %f %f %f\n", pos, end_pos, cursor_pos);
+	(cursor_pos >= pos + 0.001) && (cursor_pos <= end_pos + 0.001) ? (
     // cursor is on item
-  	printf("%s %d %d %d", "Matched", pos, end_pos, cursor_pos);
+    
   	take = GetActiveTake(item_id);
   	
   	current_pos_ppq = MIDI_GetPPQPosFromProjTime(take, cursor_pos);
@@ -31,19 +29,14 @@ printf("MediaItem %f %f %f\n", pos, end_pos, cursor_pos);
   	evt_index = 0;
   	loop(MIDI_CountEvts(take, NULL, NULL, num_sysex), iterate_events ?
   		(
-  			printf("Event\n");
   			MIDI_GetTextSysexEvt(take, evt_index, NULL, NULL, current_evt_pos_ppq, current_evt_type, current_ent_msg);
   			(current_evt_type == -1) ? (
-  				printf("Sysex\n");
   				// yes, this is a sysex message
   				(current_pos_ppq == current_evt_pos_ppq) ? (
-  					printf("On current position\n");
   					// yes, it is on current cursor position
-  					printf("%d\n", strlen(current_msg));
-  					sprintf(#expected_sysex, "%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c", 0x42, 0x30, 0x00, 0x01, 0x05, 0x41, 0x00, 0x00, 0x0D, 0x00, 0x28, 0x00, 0x00, 0x00, 0x00, 0x01);
-  					!strcmp(current_msg, #expected_sysex) ? printf("Message matched!");
-//  					(current_msg == $42300001054100000D00280000000001) ? printf("Bingo");
-  				);
+  					printf("dr on ln%d\n", strlen(#sys_dr_on));
+  					!strcmp(current_msg, #sys_dr_on) ? printf("Message matched!\n");
+  				);  				
   			);
   			evt_index += 1;
   		)
